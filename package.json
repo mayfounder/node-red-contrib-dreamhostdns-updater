@@ -1,0 +1,22 @@
+{
+  "name": "node-red-dreamhost",
+  "version": "1.0.0",
+  "description": "Blah",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mayfounder/node-red-dreamhost.git"
+  },
+  "keywords": [
+    "node-red"
+  ],
+  "author": "Ankit Modi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mayfounder/node-red-dreamhost/issues"
+  },
+  "homepage": "https://github.com/mayfounder/node-red-dreamhost#readme"
+}
