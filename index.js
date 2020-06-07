@@ -2,27 +2,47 @@ module.exports = function(RED) {
 	function DreamHostNode(config) {
 	  const isIp = require('is-ip');
 		const DreamHost = require('dreamhost');
-		const qs = require('querystring');
 		RED.nodes.createNode(this,config);
 		this.domain = config.domain;
 		this.subdomain = config.subdomain;
 		this.record = this.subdomain + "." + this.domain;
 		this.apiKey = this.credentials.apiKey;
 		var node = this;
+		var addRecord = function(record) {
+			node.dh.dns.addRecord(record)
+				.then(result => node.log("Added Record:" + JSON.stringify(result)))
+				.catch(connectionError);
+		};
+		var removeRecord = function(record, cb) { 
+			node.dh.dns.removeRecord(record)
+				.then(function(result) {
+					node.log("Removed Record:" + JSON.stringify(result));
+					if(cb) {
+						cb(record);
+					}	
+				})
+				.catch(connectionError);
+		};
 		var updateRecords = function(records) {
 			node.status({fill:"yellow",shape:"ring",text:"Updating..."});
 			node.log("Updating records: " + JSON.stringify(records));
 			if(records.ipv4) {
 				node.log("Updating IPv4 Record");
+				if(records.v4missing == false) {
+					node.log("Removing old IPv4 Record");
+					removeRecord(records.ipv4, addRecord);
+				} else {
+					addRecord(records.ipv4)
+				}
 			}
 			if(records.ipv6) {
 				node.log("Updating IPv6 Record");
 				if(records.v6missing == false) {
 					node.log("Removing old IPv6 Record");
+					removeRecord(records.ipv6, addRecord);
+				} else {
+					addRecord(records.ipv6);
 				}
-				node.log(qs.stringify(records.ipv6));
-				node.dh.addRecord(records.ipv6)
-					.then(result => node.log(JSON.stringify(result)));
 			}
 			node.status({fill:"green",shape:"dot",text:"OK"});
 			return Promise.resolve();
@@ -75,6 +95,7 @@ module.exports = function(RED) {
 				if(r.editable == "1" && 
 						r.zone == node.domain && 
 						r.record == node.record) {
+					node.log("Record: " + JSON.stringify(r));
 					if(r.type == "A") {
 						foundIPv4 = true;
 						if(r.value != node.publicIPv4 && node.publicIPv4 != null) {
