@@ -1,4 +1,8 @@
 module.exports = function(RED) {
+  /**
+   * Node that exposes dreamhost functionalities
+   * @param {object} config - Node Red Config
+   */
   function DreamHostNode(config) {
     const isIp = require('is-ip');
     const DreamHost = require('dreamhost');
@@ -52,13 +56,18 @@ module.exports = function(RED) {
       node.status({fill: 'green', shape: 'dot', text: 'OK'});
       return Promise.resolve();
     };
-    var connectionError = function(err, state) {
+    const connectionError = function(err, state) {
       let errorMsg = 'Error Connecting to Dreamhost: ' + JSON.stringify(err);
       if (state) {
-        errorMsg = 'Error Connecting to Dreamhost in ' + state + ' : ' + JSON.stringify(err);
+        errorMsg = 'Error Connecting to Dreamhost in ' + state + ' : ' +
+                    JSON.stringify(err);
       }
       node.error(errorMsg);
-      node.status({fill: 'red', shape: 'ring', text: 'Error Connecting to Dreamhost'});
+      node.status({
+        fill: 'red',
+        shape: 'ring',
+        text: 'Error Connecting to Dreamhost',
+      });
       msg.payload = {
         'error': false,
         'errorMsg': errorMsg,
@@ -159,7 +168,9 @@ module.exports = function(RED) {
       }
       if (node.publicIPv4 != null || node.publicIPv6 != null) {
         node.debug('Payload: ' + JSON.stringify(msg.payload));
-        node.debug('Domain: ' + node.domain + ' Subdomain: ' + node.subdomain + ' API Key:' + node.apiKey);
+        node.debug('Domain: ' + node.domain +
+          ' Subdomain: ' + node.subdomain +
+          ' API Key:' + node.apiKey);
         dh.dns.listRecords()
             .then(checkRecords)
             .catch((err) => connectionError(err, 'list_records'));
@@ -169,7 +180,8 @@ module.exports = function(RED) {
         };
         node.send(msg);
       } else {
-        const errorMsg = 'No IP Addresses found in payload: ' + JSON.stringify(msg.payload);
+        const errorMsg = 'No IP Addresses found in payload: ' +
+          JSON.stringify(msg.payload);
         node.warn(errorMsg);
         msg.payload = {
           'error': true,
