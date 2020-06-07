@@ -3,17 +3,18 @@
   "version": "1.0.0",
   "description": "Blah",
   "dependencies": {
-		"dreamhost": "^1.0.5",
-		"is-ip": "^3.1.0"
+    "dreamhost": "^1.0.5",
+    "is-ip": "^3.1.0"
   },
-  "dev_dependencies": {
-		"eslint": "^7.2.0"
+  "devDependencies": {
+    "eslint": "^7.2.0",
+    "eslint-config-google": "^0.14.0"
   },
   "main": "index.js",
   "node-red": {
-		"nodes": {
-			"lower-case": "index.js"
-		}
+    "nodes": {
+      "lower-case": "index.js"
+    }
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
