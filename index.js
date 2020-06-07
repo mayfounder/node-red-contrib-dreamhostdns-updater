@@ -2,178 +2,178 @@ module.exports = function(RED) {
   function DreamHostNode(config) {
     const isIp = require('is-ip');
     const DreamHost = require('dreamhost');
-    RED.nodes.createNode(this,config);
+    RED.nodes.createNode(this, config);
     this.domain = config.domain;
     this.subdomain = config.subdomain;
-    this.record = this.subdomain + "." + this.domain;
+    this.record = this.subdomain + '.' + this.domain;
     this.apiKey = this.credentials.apiKey;
-    var node = this;
-    var addRecord = function(record, cb) {
+    const node = this;
+    const addRecord = function(record, cb) {
       node.dh.dns.addRecord(record)
-        .then(function(result) {
-          node.log("Added Record:" + JSON.stringify(result));
-          if(cb) {
-            cb(record);
-          }
-        })
-        .catch(connectionError);
+          .then(function(result) {
+            node.log('Added Record:' + JSON.stringify(result));
+            if (cb) {
+              cb(record);
+            }
+          })
+          .catch(connectionError);
     };
-    var removeRecord = function(record, cb) { 
+    const removeRecord = function(record, cb) {
       node.dh.dns.removeRecord(record)
-        .then(function(result) {
-          node.log("Removed Record:" + JSON.stringify(result));
-          if(cb) {
-            cb(record);
-          }  
-        })
-        .catch(connectionError);
+          .then(function(result) {
+            node.log('Removed Record:' + JSON.stringify(result));
+            if (cb) {
+              cb(record);
+            }
+          })
+          .catch(connectionError);
     };
-    var updateRecords = function(records) {
-      node.status({fill:"yellow",shape:"ring",text:"Updating..."});
-      node.log("Updating records: " + JSON.stringify(records));
-      if(records.ipv4) {
-        node.log("Updating IPv4 Record");
-        if(records.v4missing == false) {
-          node.log("Removing old IPv4 Record");
+    const updateRecords = function(records) {
+      node.status({fill: 'yellow', shape: 'ring', text: 'Updating...'});
+      node.log('Updating records: ' + JSON.stringify(records));
+      if (records.ipv4) {
+        node.log('Updating IPv4 Record');
+        if (records.v4missing == false) {
+          node.log('Removing old IPv4 Record');
           removeRecord(records.ipv4, addRecord);
         } else {
-          addRecord(records.ipv4)
+          addRecord(records.ipv4);
         }
       }
-      if(records.ipv6) {
-        node.log("Updating IPv6 Record");
-        if(records.v6missing == false) {
-          node.log("Removing old IPv6 Record");
+      if (records.ipv6) {
+        node.log('Updating IPv6 Record');
+        if (records.v6missing == false) {
+          node.log('Removing old IPv6 Record');
           removeRecord(records.ipv6, addRecord);
         } else {
           addRecord(records.ipv6);
         }
       }
-      node.status({fill:"green",shape:"dot",text:"OK"});
+      node.status({fill: 'green', shape: 'dot', text: 'OK'});
       return Promise.resolve();
-    }
+    };
     var connectionError = function(err, state) {
-      var errorMsg = "Error Connecting to Dreamhost: " + JSON.stringify(err);
-      if(state) {
-        errorMsg = "Error Connecting to Dreamhost in " + state + " : " + JSON.stringify(err);
+      let errorMsg = 'Error Connecting to Dreamhost: ' + JSON.stringify(err);
+      if (state) {
+        errorMsg = 'Error Connecting to Dreamhost in ' + state + ' : ' + JSON.stringify(err);
       }
       node.error(errorMsg);
-      node.status({fill:"red",shape:"ring",text:"Error Connecting to Dreamhost"});
+      node.status({fill: 'red', shape: 'ring', text: 'Error Connecting to Dreamhost'});
       msg.payload = {
-        "error": false,
-        "errorMsg": errorMsg, 
+        'error': false,
+        'errorMsg': errorMsg,
       };
       node.send(msg);
-    }
-    var genIPv6Record = function(r) {
-      if(r) {
+    };
+    const genIPv6Record = function(r) {
+      if (r) {
         return {
-          "record": r.record,
-          "type": r.type,
-          "value": node.publicIPv6,
-          "comment": r.comment,
-        }
+          'record': r.record,
+          'type': r.type,
+          'value': node.publicIPv6,
+          'comment': r.comment,
+        };
       } else {
         return {
-          "record": node.record, 
-          "type": "AAAA", 
-          "value": node.publicIPv6,
-          "commment": node.record + " IPv6",
-        }
+          'record': node.record,
+          'type': 'AAAA',
+          'value': node.publicIPv6,
+          'commment': node.record + ' IPv6',
+        };
       }
     };
-    var genIPv4Record = function(r) {
-      if(r) {
+    const genIPv4Record = function(r) {
+      if (r) {
         return {
-          "record": r.record,
-          "type": r.type,
-          "value": node.publicIPv4,
-          "comment": r.comment,
-        }
+          'record': r.record,
+          'type': r.type,
+          'value': node.publicIPv4,
+          'comment': r.comment,
+        };
       } else {
         return {
-          "record": node.record, 
-          "type": "A", 
-          "value": node.publicIPv4,
-          "commment": node.record + " IPv4",
-        }
+          'record': node.record,
+          'type': 'A',
+          'value': node.publicIPv4,
+          'commment': node.record + ' IPv4',
+        };
       }
     };
-    var checkRecords = function(records) {
-      node.status({fill:"green",shape:"dot",text:"OK"});
-      var newRecords = {};
-      var foundIPv4 = false;
-      var foundIPv6 = false;
-      for(var i = 0; i < records.length; i++) {
-        var r = records[i];
-        if(r.editable == "1" && 
-            r.zone == node.domain && 
+    const checkRecords = function(records) {
+      node.status({fill: 'green', shape: 'dot', text: 'OK'});
+      const newRecords = {};
+      let foundIPv4 = false;
+      let foundIPv6 = false;
+      for (let i = 0; i < records.length; i++) {
+        const r = records[i];
+        if (r.editable == '1' &&
+            r.zone == node.domain &&
             r.record == node.record) {
-          node.log("Record: " + JSON.stringify(r));
-          if(r.type == "A") {
+          node.log('Record: ' + JSON.stringify(r));
+          if (r.type == 'A') {
             foundIPv4 = true;
-            if(r.value != node.publicIPv4 && node.publicIPv4 != null) {
-              node.log("IPv4 Mistmatched");
+            if (r.value != node.publicIPv4 && node.publicIPv4 != null) {
+              node.log('IPv4 Mistmatched');
               newRecords.ipv4 = genIPv4Record(r);
             }
           }
-          if(r.type == "AAAA") {
+          if (r.type == 'AAAA') {
             foundIPv6 = true;
-            if(r.value != node.publicIPv6 && node.publicIPv6 != null) {
-              node.log("IPv6 Mistmatched");
+            if (r.value != node.publicIPv6 && node.publicIPv6 != null) {
+              node.log('IPv6 Mistmatched');
               newRecords.ipv6 = genIPv6Record(r);
             }
           }
         }
       }
-      if(!foundIPv4 && node.publicIPv4 != null) { 
-        node.log("IPv4 Record Not Found");
+      if (!foundIPv4 && node.publicIPv4 != null) {
+        node.log('IPv4 Record Not Found');
         newRecords.ipv4 = genIPv4Record(null);
         newRecords.v4missing = true;
       }
-      if(!foundIPv6 && node.publicIPv6 != null) {
-        node.log("IPv6 Record Not Found");
+      if (!foundIPv6 && node.publicIPv6 != null) {
+        node.log('IPv6 Record Not Found');
         newRecords.ipv6 = genIPv6Record(null);
         newRecords.v6missing = true;
       }
-      if(newRecords.ipv6 || newRecords.ipv4) {
+      if (newRecords.ipv6 || newRecords.ipv4) {
         updateRecords(newRecords);
       }
-    }
+    };
     node.on('input', function(msg) {
       node.publicIPv4 = null;
       node.publicIPv6 = null;
-      var dh = new DreamHost({
-        key: node.apiKey
+      const dh = new DreamHost({
+        key: node.apiKey,
       });
       node.dh = dh;
-      if(msg.payload.publicIPv4) {
-        if(isIp(msg.payload.publicIPv4)) {
+      if (msg.payload.publicIPv4) {
+        if (isIp(msg.payload.publicIPv4)) {
           node.publicIPv4 = msg.payload.publicIPv4;
         }
       }
-      if(msg.payload.publicIPv6) {
-        if(isIp(msg.payload.publicIPv6)) {
+      if (msg.payload.publicIPv6) {
+        if (isIp(msg.payload.publicIPv6)) {
           node.publicIPv6 = msg.payload.publicIPv6.toUpperCase();
         }
       }
-      if(node.publicIPv4 != null || node.publicIPv6 != null) {
-        node.debug("Payload: " + JSON.stringify(msg.payload));
-        node.debug("Domain: " + node.domain + " Subdomain: " + node.subdomain + " API Key:" + node.apiKey);
+      if (node.publicIPv4 != null || node.publicIPv6 != null) {
+        node.debug('Payload: ' + JSON.stringify(msg.payload));
+        node.debug('Domain: ' + node.domain + ' Subdomain: ' + node.subdomain + ' API Key:' + node.apiKey);
         dh.dns.listRecords()
-          .then(checkRecords)
-          .catch(err => connectionError(err, "list_records"));
+            .then(checkRecords)
+            .catch((err) => connectionError(err, 'list_records'));
         msg.payload = {
-          "error": false,
-          "errorMsg": "",
+          'error': false,
+          'errorMsg': '',
         };
         node.send(msg);
       } else {
-        var errorMsg = "No IP Addresses found in payload: " + JSON.stringify(msg.payload);
+        const errorMsg = 'No IP Addresses found in payload: ' + JSON.stringify(msg.payload);
         node.warn(errorMsg);
         msg.payload = {
-          "error": true,
-          "errorMsg": errorMsg,
+          'error': true,
+          'errorMsg': errorMsg,
         };
         node.send(msg);
       }
@@ -187,9 +187,9 @@ module.exports = function(RED) {
       done();
     });
   }
-  RED.nodes.registerType("node-red-dreamhost",DreamHostNode, {
+  RED.nodes.registerType('node-red-dreamhost', DreamHostNode, {
     credentials: {
-      apiKey: {type:"text"},
-    }
+      apiKey: {type: 'text'},
+    },
   });
-}
+};
