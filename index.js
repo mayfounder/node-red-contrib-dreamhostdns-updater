@@ -26,7 +26,7 @@ module.exports = function(RED) {
               cb(record);
             }
           })
-          .catch(connectionError);
+          .catch((err) => connectionError(err, 'add_record'));
     };
     const removeRecord = function(record, cb) {
       node.dh.dns.removeRecord(record)
@@ -36,9 +36,9 @@ module.exports = function(RED) {
               cb(record);
             }
           })
-          .catch(connectionError);
+          .catch((err) => connectionError(err, 'remove_record'));
     };
-    const updateRecords = function(records) {
+    const updateRecords = function(records, msg) {
       node.status({fill: 'yellow', shape: 'ring', text: 'Updating...'});
       node.log('Updating records: ' + JSON.stringify(records));
       if (records.ipv4) {
@@ -60,6 +60,14 @@ module.exports = function(RED) {
         }
       }
       node.status({fill: 'green', shape: 'dot', text: 'OK'});
+      // Fix this to be in order
+      msg.payload = {
+        'error': false,
+        'errorMsg': '',
+        'updatedIPv4': true,
+        'updatedIPv6': true,
+      };
+      node.send(msg);
       return Promise.resolve();
     };
     const connectionError = function(err, state) {
@@ -114,7 +122,7 @@ module.exports = function(RED) {
         };
       }
     };
-    const checkRecords = function(records) {
+    const checkRecords = function(records, msg) {
       node.status({fill: 'green', shape: 'dot', text: 'OK'});
       const newRecords = {};
       let foundIPv4 = false;
@@ -152,7 +160,15 @@ module.exports = function(RED) {
         newRecords.v6missing = true;
       }
       if (newRecords.ipv6 || newRecords.ipv4) {
-        updateRecords(newRecords);
+        updateRecords(newRecords, msg);
+      } else {
+        msg.payload = {
+          'error': false,
+          'errorMsg': '',
+          'updatedIPv4': false,
+          'updatedIPv6': false,
+        };
+        node.send(msg);
       }
     };
     node.on('input', function(msg) {
@@ -173,18 +189,13 @@ module.exports = function(RED) {
         }
       }
       if (node.publicIPv4 != null || node.publicIPv6 != null) {
-        node.debug('Payload: ' + JSON.stringify(msg.payload));
-        node.debug('Domain: ' + node.domain +
+        node.log('Payload: ' + JSON.stringify(msg.payload));
+        node.log('Domain: ' + node.domain +
           ' Subdomain: ' + node.subdomain +
           ' API Key:' + node.apiKey);
-        dh.dns.listRecords()
-            .then(checkRecords)
+        return dh.dns.listRecords()
+            .then((records) => checkRecords(records, msg))
             .catch((err) => connectionError(err, 'list_records'));
-        msg.payload = {
-          'error': false,
-          'errorMsg': '',
-        };
-        node.send(msg);
       } else {
         const errorMsg = 'No IP Addresses found in payload: ' +
           JSON.stringify(msg.payload);
