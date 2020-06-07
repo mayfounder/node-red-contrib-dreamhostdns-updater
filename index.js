@@ -24,63 +24,76 @@ module.exports = function(RED) {
 			node.error("Error Connecting to Dreamhost: " + JSON.stringify(err));
 			node.status({fill:"red",shape:"ring",text:"Error Connecting to Dreamhost"});
 		}
-		var checkRecords = function(records) {
-			node.status({fill:"green",shape:"dot",text:"OK"});
-			var recordsToUpdate = {};
-			for(var i = 0; i < records.length; i++) {
-				var r = records[i];
-				var foundIPv4 = false;
-				var foundIPv6 = false;
-				if(r.editable != "0" && 
-						r.zone == node.domain && 
-						r.record == node.record) {
-					if(r.type == "A") {
-						foundIPv4 = true;
-						if(r.value != node.publicIPv4 && node.publicIPv4) {
-							/*
-							recordsToUpdate.ipv4 = {
-								"record": r.record,
-								"type": r.type,
-								"value": node.publicIPv4,
-								"comment": r.comment",
-							};
-							*/
-						}
-					}
-					if(r.type == "AAAA") {
-						foundIPv6 = true;
-						if(r.value != node.publicIPv6 && node.publicIPv6) {
-							/*
-							recordsToUpdate.ipv6 = {
-								"record": r.record,
-								"type": r.type,
-								"value": node.publicIPv6,
-								"comment": r.comment",
-							};
-							*/
-						}
-					}
+		var genIPv6Record = function(r) {
+			if(r) {
+				return {
+					"record": r.record,
+					"type": r.type,
+					"value": node.publicIPv6,
+					"comment": r.comment,
 				}
-			}
-			if(!foundIPv4 && node.publicIPv4) { 
-				/*
-				recordsToUpdate.ipv4 = {
-					"record": node.record, 
-					"type": "A", 
-					"value": node.publicIPv4,
-					"commment": node.record + " IPv4",
-				};
-				*/
-			}
-			if(!foundIPv6 && node.publicIPv6) {
-				/*
-				recordsToUpdate.ipv6 = {
+			} else {
+				return {
 					"record": node.record, 
 					"type": "AAAA", 
 					"value": node.publicIPv6,
 					"commment": node.record + " IPv6",
-				};
-				*/
+				}
+			}
+		};
+		var genIPv4Record = function(r) {
+			if(r) {
+				return {
+					"record": r.record,
+					"type": r.type,
+					"value": node.publicIPv4,
+					"comment": r.comment,
+				}
+			} else {
+				return {
+					"record": node.record, 
+					"type": "A", 
+					"value": node.publicIPv4,
+					"commment": node.record + " IPv4",
+				}
+			}
+		};
+		var checkRecords = function(records) {
+			node.status({fill:"green",shape:"dot",text:"OK"});
+			var newRecords = {};
+			var foundIPv4 = false;
+			var foundIPv6 = false;
+			for(var i = 0; i < records.length; i++) {
+				var r = records[i];
+				if(r.editable == "1" && 
+						r.zone == node.domain && 
+						r.record == node.record) {
+					if(r.type == "A") {
+						foundIPv4 = true;
+						if(r.value != node.publicIPv4 && node.publicIPv4 != null) {
+							node.log("IPv4 Mistmatched");
+							newRecords.ipv4 = genIPv4Record(r);
+						}
+					}
+					if(r.type == "AAAA") {
+						foundIPv6 = true;
+						if(r.value != node.publicIPv6 && node.publicIPv6 != null) {
+							node.log("IPv6 Mistmatched");
+							newRecords.ipv6 = genIPv6Record(r);
+						}
+					}
+				}
+			}
+			if(!foundIPv4 && node.publicIPv4 != null) { 
+				node.log("IPv4 Record Not Found");
+				newRecords.ipv4 = genIPv4Record(null);
+			}
+			if(!foundIPv6 && node.publicIPv6 != null) {
+				node.log("IPv6 Record Not Found");
+				newRecords.ipv6 = genIPv6Record(null);
+			}
+			if(newRecords.ipv6 || newRecords.ipv4) {
+				updateRecords(newRecords);
 			}
 		}
 		node.on('input', function(msg) {
@@ -99,7 +112,7 @@ module.exports = function(RED) {
 					node.publicIPv6 = msg.payload.publicIPv6.toUpperCase();
 				}
 			}
-			if(node.publicIPv4 || node.publicIPv6) {
+			if(node.publicIPv4 != null || node.publicIPv6 != null) {
 				node.debug("Payload: " + JSON.stringify(msg.payload));
 				node.debug("Domain: " + node.domain + " Subdomain: " + node.subdomain + " API Key:" + node.apiKey);
 				dh.dns.listRecords()
