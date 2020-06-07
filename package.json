@@ -2,7 +2,16 @@
   "name": "node-red-dreamhost",
   "version": "1.0.0",
   "description": "Blah",
+  "dependencies": {
+	"dreamhost": "^1.0.5",
+	"is-ip": "^3.1.0"
+  },
   "main": "index.js",
+  "node-red": {
+	"nodes": {
+		"lower-case": "index.js"
+	}
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

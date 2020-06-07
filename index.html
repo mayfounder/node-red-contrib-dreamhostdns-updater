@@ -1,26 +1,46 @@
 <script type="text/javascript">
-				RED.nodes.registerType('lower-case',{
-								category: 'function',
-								color: '#a6bbcf',
-								defaults: {
-												name: {value:""}
-								},
-								inputs:1,
-								outputs:1,
-								icon: "file.png",
-								label: function() {
-												return this.name||"lower-case";
-								}
-				});
+	RED.nodes.registerType('node-red-dreamhost',{
+		category: 'function',
+		color: '#a6bbcf',
+		credentials: {
+			apiKey: {type:"text"},
+		},
+		defaults: {
+			name: {value:""},
+			domain: {value: ""},
+			subdomain: {value: ""},
+		},
+		inputs:1,
+		outputs:1,
+		icon: "bridge.png",
+		align: "right",
+		inputLabels: "ip Address",
+		outputLabels: ["status"],
+		label: function() {
+			return this.name||"node-red-dreamhost";
+		}
+	});
 </script>
 
-<script type="text/html" data-template-name="lower-case">
-				<div class="form-row">
-				<label for="node-input-name"><i class="icon-tag"></i> Name</label>
-				<input type="text" id="node-input-name" placeholder="Name">
-		</div>
+<script type="text/html" data-template-name="node-red-dreamhost">
+	<div class="form-row">
+		<label for="node-input-name"><i class="icon-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		<label for="node-input-domain"><i class="icon-tag"></i> Dreamhost Domain</label>
+		<input type="text" id="node-input-domain" placeholder="DreamHost API">
+	</div>
+	<div class="form-row">
+		<label for="node-input-subdomain"><i class="icon-tag"></i> Dreamhost Sub-Domain</label>
+		<input type="text" id="node-input-subdomain" placeholder="subdomain">
+	</div>
+	<div class="form-row">
+  	<label for="node-input-apiKey"><i class="icon-tag"></i> Dreamhost API Key</label>
+  	<input type="text" id="node-input-apiKey">
+	</div>
 </script>
 
-<script type="text/html" data-help-name="lower-case">
-				<p>A simple node that converts the message payloads into all lower-case characters</p>
+<script type="text/html" data-help-name="node-red-dreamhost">
+	<p>Hello World!</p>
 </script>
