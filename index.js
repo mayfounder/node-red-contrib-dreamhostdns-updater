@@ -10,49 +10,77 @@ module.exports = function(RED) {
 		var node = this;
 		var updateRecords = function(records) {
 			node.status({fill:"yellow",shape:"ring",text:"Updating..."});
-			for(i = 0; i < records.length; i++) {
-				var r = records[i];
-				if(r.type == "A" && r.value != node.publicIPv4) {
-					node.log("Updating IPv4 Record");
-				}
-				if(r.type == "AAAA" && r.value != node.publicIPv6) {
-					node.log("Updating IPv6 Record");
-				}
+			node.log("Updating records: " + JSON.stringify(records));
+			if(records.ipv4) {
+				node.log("Updating IPv4 Record");
+			}
+			if(records.ipv6) {
+				node.log("Updating IPv6 Record");
 			}
 			node.status({fill:"green",shape:"dot",text:"OK"});
 			return Promise.resolve();
 		}
 		var connectionError = function(err) {
 			node.error("Error Connecting to Dreamhost: " + JSON.stringify(err));
-			this.status({fill:"red",shape:"ring",text:"Error Connecting to Dreamhost"});
+			node.status({fill:"red",shape:"ring",text:"Error Connecting to Dreamhost"});
 		}
 		var checkRecords = function(records) {
-			this.status({fill:"green",shape:"dot",text:"OK"});
-			var recordsToUpdate = [];
+			node.status({fill:"green",shape:"dot",text:"OK"});
+			var recordsToUpdate = {};
 			for(var i = 0; i < records.length; i++) {
 				var r = records[i];
 				var foundIPv4 = false;
 				var foundIPv6 = false;
-				if(r.editable != "0") {
-					if(r.zone == node.domain && r.record == node.record) {
-						node.log(JSON.stringify(r));
-						if(r.type == "A") {
-							foundIPv4 = true;
-							if(r.value != node.publicIPv4) {
-								recordsToUpdate.push(r);
-							}
+				if(r.editable != "0" && 
+						r.zone == node.domain && 
+						r.record == node.record) {
+					if(r.type == "A") {
+						foundIPv4 = true;
+						if(r.value != node.publicIPv4 && node.publicIPv4) {
+							/*
+							recordsToUpdate.ipv4 = {
+								"record": r.record,
+								"type": r.type,
+								"value": node.publicIPv4,
+								"comment": r.comment",
+							};
+							*/
 						}
-						if(r.type == "AAAA") {
-							foundIPv6 = true;
-							if(r.value != node.publicIPv6) {
-								recordsToUpdate.push(r);
-							}
+					}
+					if(r.type == "AAAA") {
+						foundIPv6 = true;
+						if(r.value != node.publicIPv6 && node.publicIPv6) {
+							/*
+							recordsToUpdate.ipv6 = {
+								"record": r.record,
+								"type": r.type,
+								"value": node.publicIPv6,
+								"comment": r.comment",
+							};
+							*/
 						}
 					}
 				}
-				if(!foundIPv4 || !foundIPv6 || recordsToUpdate.length != 0) {
-					updateRecords(recordsToUpdate);
-				}
+			}
+			if(!foundIPv4 && node.publicIPv4) { 
+				/*
+				recordsToUpdate.ipv4 = {
+					"record": node.record, 
+					"type": "A", 
+					"value": node.publicIPv4,
+					"commment": node.record + " IPv4",
+				};
+				*/
+			}
+			if(!foundIPv6 && node.publicIPv6) {
+				/*
+				recordsToUpdate.ipv6 = {
+					"record": node.record, 
+					"type": "AAAA", 
+					"value": node.publicIPv6,
+					"commment": node.record + " IPv6",
+				};
+				*/
 			}
 		}
 		node.on('input', function(msg) {
