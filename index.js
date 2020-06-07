@@ -9,7 +9,6 @@ module.exports = function(RED) {
 		this.apiKey = this.credentials.apiKey;
 		var node = this;
 		var updateRecords = function(records) {
-			/*
 			node.status({fill:"yellow",shape:"ring",text:"Updating..."});
 			for(i = 0; i < records.length; i++) {
 				var r = records[i];
@@ -22,17 +21,15 @@ module.exports = function(RED) {
 			}
 			node.status({fill:"green",shape:"dot",text:"OK"});
 			return Promise.resolve();
-			*/
-		};
+		}
 		var connectionError = function(err) {
-			node.error("Error Connecting to Dreamhost: " + JSON.stringify(err)));
+			node.error("Error Connecting to Dreamhost: " + JSON.stringify(err));
 			this.status({fill:"red",shape:"ring",text:"Error Connecting to Dreamhost"});
-		};
+		}
 		var checkRecords = function(records) {
 			this.status({fill:"green",shape:"dot",text:"OK"});
 			var recordsToUpdate = [];
 			for(var i = 0; i < records.length; i++) {
-				/*
 				var r = records[i];
 				var foundIPv4 = false;
 				var foundIPv6 = false;
@@ -54,11 +51,10 @@ module.exports = function(RED) {
 					}
 				}
 				if(!foundIPv4 || !foundIPv6 || recordsToUpdate.length != 0) {
-					// updateRecords(recordsToUpdate);
+					updateRecords(recordsToUpdate);
 				}
-			*/
 			}
-		};
+		}
 		node.on('input', function(msg) {
 			node.publicIPv4 = null;
 			node.publicIPv6 = null;
@@ -78,11 +74,9 @@ module.exports = function(RED) {
 			if(node.publicIPv4 || node.publicIPv6) {
 				node.debug("Payload: " + JSON.stringify(msg.payload));
 				node.debug("Domain: " + node.domain + " Subdomain: " + node.subdomain + " API Key:" + node.apiKey);
-				/*
 				dh.dns.listRecords()
 					.then(checkRecords)
 					.catch(connectionError);
-				*/
 			} else {
 				node.warn("No IP Addresses found in payload: " + JSON.stringify(msg.payload));
 			}
