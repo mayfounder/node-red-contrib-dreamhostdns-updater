@@ -4,6 +4,12 @@ module.exports = function(RED) {
    * @param {object} config - Node Red Config
    */
   function DreamHostNode(config) {
+    /*
+     * TODO:
+     * 1 Improve msg.send handling, so it sends the message at the end
+     * 2 Change project name
+     * 3 Add Unit Test
+     */
     const isIp = require('is-ip');
     const DreamHost = require('dreamhost');
     RED.nodes.createNode(this, config);
