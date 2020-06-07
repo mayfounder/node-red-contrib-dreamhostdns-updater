@@ -2,6 +2,7 @@ module.exports = function(RED) {
 	function DreamHostNode(config) {
 	  const isIp = require('is-ip');
 		const DreamHost = require('dreamhost');
+		const qs = require('querystring');
 		RED.nodes.createNode(this,config);
 		this.domain = config.domain;
 		this.subdomain = config.subdomain;
@@ -16,6 +17,12 @@ module.exports = function(RED) {
 			}
 			if(records.ipv6) {
 				node.log("Updating IPv6 Record");
+				if(records.v6missing == false) {
+					node.log("Removing old IPv6 Record");
+				}
+				node.log(qs.stringify(records.ipv6));
+				node.dh.addRecord(records.ipv6)
+					.then(result => node.log(JSON.stringify(result)));
 			}
 			node.status({fill:"green",shape:"dot",text:"OK"});
 			return Promise.resolve();
@@ -87,10 +94,12 @@ module.exports = function(RED) {
 			if(!foundIPv4 && node.publicIPv4 != null) { 
 				node.log("IPv4 Record Not Found");
 				newRecords.ipv4 = genIPv4Record(null);
+				newRecords.v4missing = true;
 			}
 			if(!foundIPv6 && node.publicIPv6 != null) {
 				node.log("IPv6 Record Not Found");
 				newRecords.ipv6 = genIPv6Record(null);
+				newRecords.v6missing = true;
 			}
 			if(newRecords.ipv6 || newRecords.ipv4) {
 				updateRecords(newRecords);
@@ -102,6 +111,7 @@ module.exports = function(RED) {
 			var dh = new DreamHost({
 				key: node.apiKey
 			});
+			node.dh = dh;
 			if(msg.payload.publicIPv4) {
 				if(isIp(msg.payload.publicIPv4)) {
 					node.publicIPv4 = msg.payload.publicIPv4;
