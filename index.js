@@ -6,7 +6,7 @@ module.exports = function(RED) {
   function DreamHostNode(config) {
     /*
      * TODO:
-     * 1 Improve msg.send handling, so it sends the message at the end
+     * 1 Improve msg.send responses
      * 2 Change project name
      * 3 Add Unit Test
      */
@@ -18,59 +18,74 @@ module.exports = function(RED) {
     this.record = this.subdomain + '.' + this.domain;
     this.apiKey = this.credentials.apiKey;
     const node = this;
-    const addRecord = function(record, cb) {
-      node.dh.dns.addRecord(record)
-          .then(function(result) {
-            node.log('Added Record:' + JSON.stringify(result));
-            if (cb) {
-              cb(record);
-            }
-          })
-          .catch((err) => connectionError(err, 'add_record'));
+    const addRecord = function(record, msg) {
+      node.log('Adding Record: ' + JSON.stringify(record));
+      return node.dh.dns.addRecord(record);
     };
-    const removeRecord = function(record, cb) {
-      node.dh.dns.removeRecord(record)
-          .then(function(result) {
-            node.log('Removed Record:' + JSON.stringify(result));
-            if (cb) {
-              cb(record);
-            }
-          })
-          .catch((err) => connectionError(err, 'remove_record'));
+    const updateRecord = function(record, newRecord) {
+      node.log('Updating Record: ' + JSON.stringify(record) +
+        ' => ' + JSON.stringify(newRecord));
+      return new Promise((resolve, reject) => {
+        node.dh.dns.removeRecord(record)
+            .then((resultRemove) => {
+              node.dh.dns.addRecord(newRecord)
+                  .then((resultAdd) => {
+                    resolve([resultRemove, resultAdd]);
+                  })
+                  .catch((err) => reject(err));
+            })
+            .catch((err) => reject(err));
+      });
     };
-    const updateRecords = function(records, msg) {
+    const updateDNS = function(records, msg) {
       node.status({fill: 'yellow', shape: 'ring', text: 'Updating...'});
-      node.log('Updating records: ' + JSON.stringify(records));
+      node.debug('Updating records: ' + JSON.stringify(records));
+      let v4Prom = null;
+      let v6Prom = null;
       if (records.ipv4) {
-        node.log('Updating IPv4 Record');
         if (records.v4missing == false) {
-          node.log('Removing old IPv4 Record');
-          removeRecord(records.ipv4, addRecord);
+          v4Prom = updateRecord(records.ipv4_old, records.ipv4);
         } else {
-          addRecord(records.ipv4);
+          v4Prom = addRecord(records.ipv4, msg);
         }
       }
       if (records.ipv6) {
-        node.log('Updating IPv6 Record');
         if (records.v6missing == false) {
-          node.log('Removing old IPv6 Record');
-          removeRecord(records.ipv6, addRecord);
+          v6Prom = updateRecord(records.ipv6_old, records.ipv6);
         } else {
-          addRecord(records.ipv6);
+          v6Prom = addRecord(records.ipv6, msg);
         }
       }
-      node.status({fill: 'green', shape: 'dot', text: 'OK'});
-      // Fix this to be in order
-      msg.payload = {
-        'error': false,
-        'errorMsg': '',
-        'updatedIPv4': true,
-        'updatedIPv6': true,
-      };
-      node.send(msg);
-      return Promise.resolve();
+
+      Promise.all([v4Prom, v6Prom])
+          .then(([v4Result, v6Result]) => {
+            node.status({fill: 'green', shape: 'dot', text: 'OK'});
+            node.debug('Everything updated: v4 ' + v4Result +
+              ' v6 ' + v6Result);
+            msg.payload = {
+              'error': false,
+              'errorMsg': '',
+              'updatedIPv4': v4Result != null,
+              'updatedIPv6': v6Result != null,
+            };
+            node.send(msg);
+          })
+          .catch((err) => {
+            node.status({
+              fill: 'red',
+              shape: 'ring',
+              text: 'Error',
+            });
+            msg.payload = {
+              'error': true,
+              'errorMsg': JSON.stringify(err),
+              'updatedIPv4': false,
+              'updatedIPv6': false,
+            };
+            node.send(msg);
+          });
     };
-    const connectionError = function(err, state) {
+    const connectionError = function(err, state, msg) {
       let errorMsg = 'Error Connecting to Dreamhost: ' + JSON.stringify(err);
       if (state) {
         errorMsg = 'Error Connecting to Dreamhost in ' + state + ' : ' +
@@ -83,11 +98,16 @@ module.exports = function(RED) {
         text: 'Error Connecting to Dreamhost',
       });
       msg.payload = {
-        'error': false,
+        'error': true,
         'errorMsg': errorMsg,
       };
       node.send(msg);
     };
+    /**
+     * Generates an IPv6 Record based on the information
+     * @param {object} r - Current record if exists
+     * @return {object}
+     */
     const genIPv6Record = function(r) {
       if (r) {
         return {
@@ -105,6 +125,11 @@ module.exports = function(RED) {
         };
       }
     };
+    /**
+     * Generates an IPv4 Record based on the information
+     * @param {object} r - Current record if exists
+     * @return {object}
+     */
     const genIPv4Record = function(r) {
       if (r) {
         return {
@@ -122,8 +147,7 @@ module.exports = function(RED) {
         };
       }
     };
-    const checkRecords = function(records, msg) {
-      node.status({fill: 'green', shape: 'dot', text: 'OK'});
+    const findRecords = function(records) {
       const newRecords = {};
       let foundIPv4 = false;
       let foundIPv6 = false;
@@ -132,35 +156,43 @@ module.exports = function(RED) {
         if (r.editable == '1' &&
             r.zone == node.domain &&
             r.record == node.record) {
-          node.log('Record: ' + JSON.stringify(r));
+          node.debug('Record [' + i + ']: ' + JSON.stringify(r));
           if (r.type == 'A') {
             foundIPv4 = true;
             if (r.value != node.publicIPv4 && node.publicIPv4 != null) {
-              node.log('IPv4 Mistmatched');
+              node.debug('IPv4 Mistmatched');
+              newRecords.v4missing = false;
+              newRecords.ipv4_old = r;
               newRecords.ipv4 = genIPv4Record(r);
             }
           }
           if (r.type == 'AAAA') {
             foundIPv6 = true;
             if (r.value != node.publicIPv6 && node.publicIPv6 != null) {
-              node.log('IPv6 Mistmatched');
+              node.debug('IPv6 Mistmatched');
+              newRecords.v6missing = false;
+              newRecords.ipv6_old = r;
               newRecords.ipv6 = genIPv6Record(r);
             }
           }
         }
       }
       if (!foundIPv4 && node.publicIPv4 != null) {
-        node.log('IPv4 Record Not Found');
+        node.debug('IPv4 Record Not Found');
         newRecords.ipv4 = genIPv4Record(null);
         newRecords.v4missing = true;
       }
       if (!foundIPv6 && node.publicIPv6 != null) {
-        node.log('IPv6 Record Not Found');
+        node.debug('IPv6 Record Not Found');
         newRecords.ipv6 = genIPv6Record(null);
         newRecords.v6missing = true;
       }
+      return newRecords;
+    };
+    const checkRecords = function(records, msg) {
+      const newRecords = findRecords(records);
       if (newRecords.ipv6 || newRecords.ipv4) {
-        updateRecords(newRecords, msg);
+        updateDNS(newRecords, msg);
       } else {
         msg.payload = {
           'error': false,
@@ -189,13 +221,17 @@ module.exports = function(RED) {
         }
       }
       if (node.publicIPv4 != null || node.publicIPv6 != null) {
-        node.log('Payload: ' + JSON.stringify(msg.payload));
-        node.log('Domain: ' + node.domain +
+        node.debug('Input Payload: ' + JSON.stringify(msg.payload));
+        node.trace('Domain: ' + node.domain +
           ' Subdomain: ' + node.subdomain +
           ' API Key:' + node.apiKey);
+        node.status({fill: 'yellow', shape: 'ring', text: 'Fetching...'});
         return dh.dns.listRecords()
-            .then((records) => checkRecords(records, msg))
-            .catch((err) => connectionError(err, 'list_records'));
+            .then((records) => {
+              node.status({fill: 'green', shape: 'dot', text: 'OK'});
+              checkRecords(records, msg);
+            })
+            .catch((err) => connectionError(err, 'list_records', msg));
       } else {
         const errorMsg = 'No IP Addresses found in payload: ' +
           JSON.stringify(msg.payload);
@@ -206,14 +242,6 @@ module.exports = function(RED) {
         };
         node.send(msg);
       }
-    });
-    this.on('close', function(removed, done) {
-      if (removed) {
-      // This node has been deleted
-      } else {
-      // This node is being restarted
-      }
-      done();
     });
   }
   RED.nodes.registerType('node-red-dreamhost', DreamHostNode, {
