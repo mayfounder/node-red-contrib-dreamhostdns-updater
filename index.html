@@ -1,5 +1,5 @@
 <script type="text/javascript">
-	RED.nodes.registerType('node-red-dreamhost',{
+	RED.nodes.registerType('node-red-contrib-dreamhostdns-updater',{
 		category: 'function',
 		color: '#a6bbcf',
 		credentials: {
@@ -17,12 +17,12 @@
 		inputLabels: "ip Address",
 		outputLabels: ["status"],
 		label: function() {
-			return this.name||"node-red-dreamhost";
+			return this.name||"node-red-contrib-dreamhostdns-updater";
 		}
 	});
 </script>
 
-<script type="text/html" data-template-name="node-red-dreamhost">
+<script type="text/html" data-template-name="node-red-contrib-dreamhostdns-updater">
 	<div class="form-row">
 		<label for="node-input-name"><i class="icon-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
@@ -41,6 +41,6 @@
 	</div>
 </script>
 
-<script type="text/html" data-help-name="node-red-dreamhost">
-	<p>Hello World!</p>
+<script type="text/html" data-help-name="node-red-contrib-dreamhostdns-updater">
+	<p>This node can be used to update sub domain on a dreamhost down with the specified IP Address</p>
 </script>

@@ -244,7 +244,7 @@ module.exports = function(RED) {
       }
     });
   }
-  RED.nodes.registerType('node-red-dreamhost', DreamHostNode, {
+  RED.nodes.registerType('node-red-contrib-dreamhostdns-updater', DreamHostNode, {
     credentials: {
       apiKey: {type: 'text'},
     },
