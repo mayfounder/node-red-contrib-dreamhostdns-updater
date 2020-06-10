@@ -1,5 +1,5 @@
 {
-  "name": "node-red-dreamhost",
+  "name": "node-red-contrib-dreamhostdns-updater",
   "version": "1.0.0",
   "description": "Blah",
   "dependencies": {
@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mayfounder/node-red-dreamhost.git"
+    "url": "git+https://github.com/mayfounder/node-red-contrib-dreamhostdns-updater.git"
   },
   "keywords": [
     "node-red"
@@ -29,7 +29,7 @@
   "author": "Ankit Modi",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/mayfounder/node-red-dreamhost/issues"
+    "url": "https://github.com/mayfounder/node-red-contrib-dreamhostdns-updater/issues"
   },
-  "homepage": "https://github.com/mayfounder/node-red-dreamhost#readme"
+  "homepage": "https://github.com/mayfounder/node-red-contrib-dreamhostdns-updater#readme"
 }
