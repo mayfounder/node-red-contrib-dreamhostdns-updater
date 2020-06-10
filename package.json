@@ -24,7 +24,9 @@
     "url": "git+https://github.com/mayfounder/node-red-contrib-dreamhostdns-updater.git"
   },
   "keywords": [
-    "node-red"
+    "node-red",
+    "dreamhost",
+    "dns"
   ],
   "author": "Ankit Modi",
   "email": "ankit@mayfounder.net",
