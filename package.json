@@ -1,7 +1,7 @@
 {
   "name": "node-red-contrib-dreamhostdns-updater",
   "version": "1.0.0",
-  "description": "Blah",
+  "description": "Node for updating sub domains in Dreamhost DNS",
   "dependencies": {
     "dreamhost": "^1.0.5",
     "is-ip": "^3.1.0"
@@ -13,7 +13,7 @@
   "main": "index.js",
   "node-red": {
     "nodes": {
-      "lower-case": "index.js"
+      "dreamhost-dns-updater": "index.js"
     }
   },
   "scripts": {
@@ -27,7 +27,7 @@
     "node-red"
   ],
   "author": "Ankit Modi",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/mayfounder/node-red-contrib-dreamhostdns-updater/issues"
   },
