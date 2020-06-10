@@ -27,6 +27,7 @@
     "node-red"
   ],
   "author": "Ankit Modi",
+  "email": "ankit@mayfounder.net",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/mayfounder/node-red-contrib-dreamhostdns-updater/issues"
