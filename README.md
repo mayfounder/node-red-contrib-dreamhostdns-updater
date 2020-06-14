@@ -1,13 +1,5 @@
-# DreamHost for Node Red
-A Node RedNode to call Dreamhost APIs based on [DreamHost API Client for Node.js](https://www.npmjs.com/package/dreamhost)
-
-For configuration it needs following information
-- Name
-- Dreamhost domain
-- Dreamhost Sub-domain
-- Dreamhost API Key
-
-e.g. If you want to update the dns entry of subdomain sub.domain.com with ip address information every time, then domain will be "domain.com" and subdomain will be "sub"
+# DreamHost DNS Updater for Node Red
+A Node to call Dreamhost DNS APIs based on [DreamHost API Client for Node.js](https://www.npmjs.com/package/dreamhost) to update DNS entries of subdomain based on current ip address.
 
 ## Usage
 The input node receives ip address and updates the DNS Domain with the ip address
@@ -22,6 +14,6 @@ Output provides the following information in `msg.payload`
   - **payload.updatedIPv6** : If IPv6 was updated
 
 ### Sample Flow
-![A Sample Flow](examples/DreamhostDNSUpdater.png?raw=true)
+![A Sample Flow](https://github.com/mayfounder/node-red-contrib-dreamhostdns-updater/examples/DreamhostDNSUpdater.png?raw=true)
 
 This flow uses [node-red-contrib-ip](https://flows.nodered.org/node/node-red-contrib-ip)
