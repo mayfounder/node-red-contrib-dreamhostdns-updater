@@ -14,6 +14,6 @@ Output provides the following information in `msg.payload`
   - **payload.updatedIPv6** : If IPv6 was updated
 
 ### Sample Flow
-![A Sample Flow](https://github.com/mayfounder/node-red-contrib-dreamhostdns-updater/tree/master/examples/DreamhostDNSUpdater.png?raw=true)
+![A Sample Flow](https://raw.githubusercontent.com/mayfounder/node-red-contrib-dreamhostdns-updater/master/examples/DreamhostDNSUpdater.png?raw=true)
 
 This flow uses [node-red-contrib-ip](https://flows.nodered.org/node/node-red-contrib-ip)
