@@ -16,7 +16,10 @@ The input node receives ip address and updates the DNS Domain with the ip addres
   - **payload.publicIPv6** : Public IPv6 Address to use for the domain
 
 Output provides the following information in `msg.payload` 
-  - **error** : Boolean value to inform if there was an error
-  - **errorMsg** : If there was an error, the error Message, else empty string
-  - **updatedIPv4** : If IPv4 was updated
-  - **updatedIPv6** : If IPv6 was updated
+  - **payload.error** : Boolean value to inform if there was an error
+  - **payload.errorMsg** : If there was an error, the error Message, else empty string
+  - **payload.updatedIPv4** : If IPv4 was updated
+  - **payload.updatedIPv6** : If IPv6 was updated
+
+Example Flow
+![A Sample Flow](examples/DreamhostDNSUpdater.png?raw=true)
