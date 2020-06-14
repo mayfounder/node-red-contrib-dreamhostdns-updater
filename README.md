@@ -9,3 +9,14 @@ For configuration it needs following information
 
 e.g. If you want to update the dns entry of subdomain sub.domain.com with ip address information every time, then domain will be "domain.com" and subdomain will be "sub"
 
+## Usage
+The input node receives ip address and updates the DNS Domain with the ip address
+`msg.payload` contains the ip address details
+  - **payload.publicIPv4** : Public IPv4 Address to use for the domain
+  - **payload.publicIPv6** : Public IPv6 Address to use for the domain
+
+Output provides the following information in `msg.payload` 
+  - **error** : Boolean value to inform if there was an error
+  - **errorMsg** : If there was an error, the error Message, else empty string
+  - **updatedIPv4** : If IPv4 was updated
+  - **updatedIPv6** : If IPv6 was updated
