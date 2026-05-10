@@ -203,28 +203,64 @@ module.exports = function(RED) {
         node.send(msg);
       }
     };
-    node.on('input', function(msg) {
+    /**
+     * Normalizes msg.payload to a plain object when suitable for option keys.
+     * @param {*} payload - Node-RED message payload
+     * @return {object}
+     */
+    const payloadAsObject = function(payload) {
+      if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        return payload;
+      }
+      return {};
+    };
+    node.on('input', async function(msg) {
       node.publicIPv4 = null;
       node.publicIPv6 = null;
-      const dh = new DreamHost({
-        key: node.apiKey,
-      });
-      node.dh = dh;
-      if (msg.payload.publicIPv4) {
-        if (isIp(msg.payload.publicIPv4)) {
-          node.publicIPv4 = msg.payload.publicIPv4;
-        }
+      const payload = payloadAsObject(msg.payload);
+      if (payload.publicIPv4 && isIp(payload.publicIPv4)) {
+        node.publicIPv4 = payload.publicIPv4;
       }
-      if (msg.payload.publicIPv6) {
-        if (isIp(msg.payload.publicIPv6)) {
-          node.publicIPv6 = msg.payload.publicIPv6.toUpperCase();
+      if (payload.publicIPv6 && isIp(payload.publicIPv6)) {
+        node.publicIPv6 = payload.publicIPv6.toUpperCase();
+      }
+      const needV4 = node.publicIPv4 == null;
+      const needV6 = node.publicIPv6 == null;
+      if (needV4 || needV6) {
+        node.status({
+          fill: 'yellow',
+          shape: 'ring',
+          text: 'Resolving public IP...',
+        });
+        try {
+          const {publicIpv4, publicIpv6} = await import('public-ip');
+          const timeout = typeof payload.ipLookupTimeout === 'number' ?
+            payload.ipLookupTimeout : 10000;
+          const settled = await Promise.allSettled([
+            needV4 ? publicIpv4({timeout}) : Promise.resolve(undefined),
+            needV6 ? publicIpv6({timeout}) : Promise.resolve(undefined),
+          ]);
+          if (needV4 && settled[0].status === 'fulfilled') {
+            node.publicIPv4 = settled[0].value;
+          }
+          if (needV6 && settled[1].status === 'fulfilled') {
+            node.publicIPv6 = settled[1].value.toUpperCase();
+          }
+        } catch (err) {
+          connectionError(err, 'public_ip', msg);
+          return;
         }
       }
       if (node.publicIPv4 != null || node.publicIPv6 != null) {
-        node.debug('Input Payload: ' + JSON.stringify(msg.payload));
+        node.debug('Resolved / payload IPs — IPv4: ' + node.publicIPv4 +
+          ' IPv6: ' + node.publicIPv6);
         node.trace('Domain: ' + node.domain +
           ' Subdomain: ' + node.subdomain +
           ' API Key:' + node.apiKey);
+        const dh = new DreamHost({
+          key: node.apiKey,
+        });
+        node.dh = dh;
         node.status({fill: 'yellow', shape: 'ring', text: 'Fetching...'});
         return dh.dns.listRecords()
             .then((records) => {
@@ -233,8 +269,10 @@ module.exports = function(RED) {
             })
             .catch((err) => connectionError(err, 'list_records', msg));
       } else {
-        const errorMsg = 'No IP Addresses found in payload: ' +
-          JSON.stringify(msg.payload);
+        const errorMsg =
+          'Could not determine any public IP address (IPv4/IPv6). ' +
+          'Check connectivity or set payload.publicIPv4 / ' +
+          'payload.publicIPv6.';
         node.warn(errorMsg);
         msg.payload = {
           'error': true,

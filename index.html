@@ -14,7 +14,7 @@
 		outputs:1,
 		icon: "bridge.png",
 		align: "right",
-		inputLabels: "ip address",
+		inputLabels: "trigger",
 		outputLabels: ["status"],
 		label: function() {
 			return this.name||"Dreamhost DNS Updater";
@@ -42,5 +42,6 @@
 </script>
 
 <script type="text/html" data-help-name="Dreamhost DNS Updater">
-	<p>This node can be used to update sub domain on a dreamhost down with the specified IP address</p>
+	<p>Updates a DreamHost DNS A / AAAA record for the configured subdomain using your machine&apos;s current public IP address.</p>
+	<p>Public IPv4 and IPv6 are resolved automatically via the <code>public-ip</code> npm package when you inject any message. Optionally override with <code>msg.payload.publicIPv4</code> and/or <code>msg.payload.publicIPv6</code> (valid IPs only). Use <code>msg.payload.ipLookupTimeout</code> (milliseconds) to override the default lookup timeout.</p>
 </script>

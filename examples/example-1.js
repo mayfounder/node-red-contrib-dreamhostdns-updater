@@ -1,24 +1,5 @@
 [
     {
-        "id": "d5747ce0.7212",
-        "type": "ip",
-        "z": "a87e478c.69f738",
-        "name": "ip",
-        "https": false,
-        "timeout": "5000",
-        "internalIPv4": true,
-        "internalIPv6": true,
-        "publicIPv4": true,
-        "publicIPv6": true,
-        "x": 290,
-        "y": 360,
-        "wires": [
-            [
-                "26635b25.5f9794"
-            ]
-        ]
-    },
-    {
         "id": "952aee8d.45e3c",
         "type": "debug",
         "z": "a87e478c.69f738",
@@ -48,7 +29,7 @@
         "y": 360,
         "wires": [
             [
-                "d5747ce0.7212"
+                "26635b25.5f9794"
             ]
         ]
     },
