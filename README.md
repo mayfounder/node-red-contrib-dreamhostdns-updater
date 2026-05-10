@@ -10,7 +10,7 @@ Optional `msg.payload` fields:
   - **payload.publicIPv6** — If set to a valid IPv6 string, it is used instead of auto-detection for the AAAA record.
   - **payload.ipLookupTimeout** — Milliseconds for public IP lookup (default `10000`). Ignored for addresses supplied manually above.
 
-Requires **Node.js 24.15.0** or newer (LTS; see `package.json` `engines`). For local development with [nvm](https://github.com/nvm-sh/nvm), run `nvm use` in this repo; **`.nvmrc`** pins **24.15.0**.
+Requires **Node.js 22.x** (LTS; see `package.json` `engines`). For local development with [nvm](https://github.com/nvm-sh/nvm), run `nvm use` in this repo; **`.nvmrc`** pins **22.22.2**.
 
 Output provides the following information in `msg.payload` 
   - **payload.error** : Boolean value to inform if there was an error

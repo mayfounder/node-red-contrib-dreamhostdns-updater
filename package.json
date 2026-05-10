@@ -33,7 +33,7 @@
   "email": "ankit@mayfounder.net",
   "license": "MIT",
   "engines": {
-    "node": ">=24.15.0"
+    "node": ">=22.0.0"
   },
   "bugs": {
     "url": "https://github.com/mayfounder/node-red-contrib-dreamhostdns-updater/issues"
